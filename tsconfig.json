@@ -7,7 +7,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "declaration": true,
     "outDir": "dist/",
     "lib": [
       "es7",
