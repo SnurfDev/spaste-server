@@ -9,6 +9,7 @@ cd spaste-server
 
 # Install Dependencies
 npm install
+npm run build
 
 # Clone and build ui part
 git clone https://github.com/SnurfDev/spaste-ui
@@ -17,7 +18,7 @@ npm install
 npm run build
 
 # Copy Files and cleanup
-mkdir ./dist/public
+mkdir ../dist/public/
 cp -r ./dist/* ../dist/public/
 cd ..
 rm -rf ./spaste-ui
