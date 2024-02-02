@@ -15,6 +15,7 @@ git clone https://github.com/SnurfDev/spaste-ui
 cd spaste-ui
 npm install
 npm run build
+mkdir public
 
 # Copy Files and cleanup
 cp -r ./dist/* ../public/
