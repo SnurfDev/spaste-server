@@ -22,6 +22,10 @@ cp -r ./dist/* ../public/
 cd ..
 rm -rf ./spaste-ui
 
+# Setup Credentials
+mv .env.example .env
+nano .env
+
 # Build Server
 npm run build
 ```
