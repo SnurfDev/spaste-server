@@ -1,0 +1,5 @@
+node_modules/
+.env
+postbin_srv.iml
+.idea
+dist
