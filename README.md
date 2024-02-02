@@ -17,8 +17,8 @@ npm install
 npm run build
 
 # Copy Files and cleanup
-mkdir ../public
-cp -r ./dist/* ../public/
+mkdir ../dist/public
+cp -r ./dist/* ../dist/public/
 cd ..
 rm -rf ./spaste-ui
 

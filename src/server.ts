@@ -11,7 +11,7 @@ let app = express();
 
 app.use(cors({origin:"*"}));
 app.use(cookieParser());
-app.use(express.static(__dirname+"/public"));
+app.use(express.static(__dirname+"/public/"));
 
 let tokens = new Cache();
 let verificationCodes = new Cache({stdTTL:5*60});
