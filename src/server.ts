@@ -153,7 +153,7 @@ app.post("/post",bodyParser.json(),auth(false),async (req,res)=>{
 })
 
 app.get("/*",(req,res)=>{
-    if(req.url != "/") res.redirect("/")
+    if(req.url != "/") return res.redirect("/")
     res.sendStatus(404);
 });
 
