@@ -11,6 +11,7 @@ let app = express();
 
 app.use(cors({origin:"*"}));
 app.use(cookieParser());
+app.use(express.static(__dirname+"/public"));
 
 let tokens = new Cache();
 let verificationCodes = new Cache({stdTTL:5*60});
@@ -150,6 +151,13 @@ app.post("/post",bodyParser.json(),auth(false),async (req,res)=>{
     if(!pid) return sendError(res,500,"Internal Server Error");
     res.json({success:true,data:pid});
 })
+
+app.get("/*",(req,res)=>{
+    if(req.url != "/") res.redirect("/")
+    res.sendStatus(404);
+});
+
+
 if(require.main === module) {
     db.init().then(()=>app.listen(8080));
 }else {
