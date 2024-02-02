@@ -29,15 +29,15 @@ export type User = {
 export default {
     async init() {
         let mainDB = await pool.getConnection();
-        await mainDB.execute("CREATE DATABASE IF NOT EXISTS main");
-        await mainDB.execute("USE main")
+        await mainDB.execute("CREATE DATABASE IF NOT EXISTS spaste");
+        await mainDB.execute("USE spaste")
         await mainDB.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTO_INCREMENT,username VARCHAR(32),email VARCHAR(64),passhash VARCHAR(64),joindate INTEGER,isAdmin INTEGER)");
         await mainDB.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTO_INCREMENT,title VARCHAR(255),lang VARCHAR(16),content TEXT,ownerId INT,created INTEGER,edited INTEGER, publicStatus INTEGER)");
         await mainDB.end();
     },
     async getUser(uid:number,posts:boolean=true):Promise<User|null> {
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         let user:User;
         try {
             if(uid==0) {
@@ -58,7 +58,7 @@ export default {
         if(await this.getUserByName(user.username)) return null;
 
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         let newId:number = null;
         try {
             let res = await mainDB.query("INSERT INTO users(username,passhash,email,joindate) VALUES(?,?,?,UNIX_TIMESTAMP())",[user.username,user.passhash,user.email]);
@@ -74,7 +74,7 @@ export default {
 
         let success = false;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             await mainDB.execute("UPDATE users SET username=?,passhash=? WHERE id = ?",[user.username,user.passhash,uid]);
             success = true;
@@ -86,7 +86,7 @@ export default {
     async deleteUser(uid:number):Promise<boolean> {
         let success = false;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             await mainDB.execute("DELETE FROM users WHERE id=?",[uid]);
             success = true;
@@ -98,7 +98,7 @@ export default {
     async getPost(pid:number):Promise<Post|null> {
         let post:Post = null;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             [post] = await mainDB.query<Post[]>("SELECT * FROM posts WHERE id = ?", [pid]);
         }finally {
@@ -108,7 +108,7 @@ export default {
     },
     async makePost(post:Post):Promise<number|null> {
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         let newId:number = null;
         try {
             let res = await mainDB.query("INSERT INTO posts(title,lang,content,ownerId,created,edited) VALUES(?,?,?,?,UNIX_TIMESTAMP(),UNIX_TIMESTAMP())",[post.title,post.lang,post.content,post.ownerId]);
@@ -121,7 +121,7 @@ export default {
     async editPost(pid:number,post:Post):Promise<boolean> {
         let success = false;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             await mainDB.execute("UPDATE posts SET title=?,lang=?,content=?,edited=UNIX_TIMESTAMP() WHERE id = ?",[post.title,post.lang,post.content,pid]);
             success = true;
@@ -133,7 +133,7 @@ export default {
     async deletePost(pid:number):Promise<boolean> {
         let success = false;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             await mainDB.execute("DELETE FROM posts WHERE id=?",[pid]);
             success = true;
@@ -145,7 +145,7 @@ export default {
     async login(username:string,passhash:string): Promise<number|null> {
         let id:number = null;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             let resp = await mainDB.query<{id:number}[]>("SELECT id FROM users WHERE username = ? AND passhash = ?",[username,passhash]);
             if(resp[0]) [{id}] = resp;
@@ -158,7 +158,7 @@ export default {
         if(username=="anonymous") return 0;
         let id:number = null;
         let mainDB = await pool.getConnection();
-        await mainDB.execute("USE main")
+        await mainDB.execute("USE spaste")
         try {
             let resp = await mainDB.query<{id:number}[]>("SELECT id FROM users WHERE username = ?",[username]);
             if(resp[0]) [{id}] = resp;
