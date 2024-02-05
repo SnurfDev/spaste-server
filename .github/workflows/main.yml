@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@master
         with:
           path: ui/
-          repository: SnurfDev/spaste-server
+          repository: SnurfDev/spaste-ui
           token: ${{ secrets.PAT }}
       - name: Build UI
         working-directory: ./ui
