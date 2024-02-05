@@ -5,24 +5,27 @@ Server for the [SPaste](https://paste.snurf.dev)
 This will build the server (with ui) and put it in dist as a standalone express app.
 ```bash
 # Clone Repo
-git clone https://github.com/SnurfDev/spaste-server
+echo Cloning and installing server (logs in install.log)
+git clone https://github.com/SnurfDev/spaste-server > install.log
 cd spaste-server
 
 # Install Dependencies
-npm install
+npm install >> install.log
 
 # Build Server
-npm run build
+npm run build >> install.log
 
 # Clone and build ui part
-git clone https://github.com/SnurfDev/spaste-ui
+echo Installing ui
+git clone https://github.com/SnurfDev/spaste-ui >> install.log
 cd spaste-ui
-npm install
-echo -n "Deploy on url (with http(s)): "
+npm install >> install.log
+echo -n "Deploy on url (e.g. https://paste.mydomain.com): "
 read durl
-echo "VITE_API_BASE=$durl/api/" > .env
-npm run build
+echo "VITE_API_BASE=$durl/api/" >> .env
+npm run build >> install.log
 
+echo Cleaning Up
 # Copy Files and cleanup
 mkdir ../dist/public/
 cp -r ./dist/* ../dist/public/
