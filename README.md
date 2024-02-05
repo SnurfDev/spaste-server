@@ -20,7 +20,7 @@ cd spaste-ui
 npm install
 echo -n "Deploy on url (with http(s)): "
 read durl
-export API_BASE="$durl/api/"
+echo "VUE_APP_API_BASE=$durl/api/" > .env
 npm run build
 
 # Copy Files and cleanup
