@@ -162,8 +162,7 @@ app.post("/api/post",bodyParser.json(),auth(false),async (req,res)=>{
 })
 
 app.get("/*",(req,res)=>{
-    if(req.url != "/") return res.redirect("/")
-    res.sendStatus(404);
+    res.sendFile(__dirname+"/public/index.html")
 });
 
 
