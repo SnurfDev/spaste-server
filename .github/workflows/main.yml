@@ -1,0 +1,33 @@
+name: Node.js CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      - run: npm ci
+      - run: npm run build
+      - name: Check out UI
+        uses: actions/checkout@master
+        with:
+          path: ui/
+          repository: SnurfDev/spaste-server
+          token: ${{ secrets.PAT }}
+      - run: cd ui
+      - run: npm ci
+      - run: npm run build
+      - run: mkdir ../dist/public
+      - run: cp -r ./dist/* ../dist/public/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: static_build
+          path: ../dist/
+        
