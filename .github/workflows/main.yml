@@ -24,8 +24,8 @@ jobs:
           repository: SnurfDev/spaste-server
           token: ${{ secrets.PAT }}
       - name: Build UI
+        working-directory: ./ui
         run: |
-          cd ui
           npm ci
           npm run build
           mkdir ../dist/public
