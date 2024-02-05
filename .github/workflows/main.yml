@@ -13,21 +13,26 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-      - run: npm ci
-      - run: npm run build
+      - name: Build Server
+        run: | 
+          npm ci 
+          npm run build
       - name: Check out UI
         uses: actions/checkout@master
         with:
           path: ui/
           repository: SnurfDev/spaste-server
           token: ${{ secrets.PAT }}
-      - run: cd ui
-      - run: npm ci
-      - run: npm run build
-      - run: mkdir ${{ GITHUB_WORKSPACE }}/dist/public
-      - run: cp -r ./dist/* ${{ GITHUB_WORKSPACE }}/dist/public/
-      - uses: actions/upload-artifact@v4
+      - name: Build UI
+        run: |
+          cd ui
+          npm ci
+          npm run build
+          mkdir ../dist/public
+          cp -r ./dist/* ../dist/public/
+      - name: Upload Build
+        uses: actions/upload-artifact@v4
         with:
           name: static_build
-          path: ../dist/
+          path: ./dist/
         
