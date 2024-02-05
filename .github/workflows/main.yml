@@ -24,8 +24,8 @@ jobs:
       - run: cd ui
       - run: npm ci
       - run: npm run build
-      - run: mkdir ../dist/public
-      - run: cp -r ./dist/* ../dist/public/
+      - run: mkdir ${{ GITHUB_WORKSPACE }}/dist/public
+      - run: cp -r ./dist/* ${{ GITHUB_WORKSPACE }}/dist/public/
       - uses: actions/upload-artifact@v4
         with:
           name: static_build
