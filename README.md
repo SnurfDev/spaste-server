@@ -18,6 +18,9 @@ npm run build
 git clone https://github.com/SnurfDev/spaste-ui
 cd spaste-ui
 npm install
+echo -n "Deploy on url (with http(s)): "
+read durl
+export API_BASE="$(durl)/api/"
 npm run build
 
 # Copy Files and cleanup
