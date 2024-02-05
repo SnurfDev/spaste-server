@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser"
 import bodyParser from "body-parser";
 import * as crypto from "crypto";
 import {sendMail} from "./mailer";
+import {mimeMap} from "./mimeTypes";
+import {typeMap} from "./typeMap";
 
 let app = express();
 
@@ -26,7 +28,7 @@ declare global {
 const sha256 = (data:string|Buffer)=>crypto.createHash("sha256").update(data).digest("hex");
 const sendError = (res:express.Response,code:number,reason:string)=>res.status(code).json({success:false,data:null,reason})
 
-app.post("/login",bodyParser.json(),async (req,res)=>{
+app.post("/api/login",bodyParser.json(),async (req,res)=>{
     let loginBody:{username:string,password:string} = req.body;
     if(!loginBody.username || !loginBody.password) return sendError(res,400,"Bad Request");
     let loggedIn = await db.login(loginBody.username,sha256(loginBody.password));
@@ -37,7 +39,7 @@ app.post("/login",bodyParser.json(),async (req,res)=>{
     res.json({success:true,data:token});
 });
 
-app.post("/register",bodyParser.json(),async (req,res)=>{
+app.post("/api/register",bodyParser.json(),async (req,res)=>{
     let registerBody:{username:string,email:string,password:string,verifyCode?:string} = req.body;
     if(!registerBody.username || !registerBody.password || !registerBody.email) return sendError(res,400,"Bad Request");
     let verificationCode = registerBody.verifyCode;
@@ -79,7 +81,7 @@ const auth:(required:boolean)=>RequestHandler =(required)=>(req,res,next)=>{
     next();
 }
 
-app.route("/user/:id")
+app.route("/api/user/:id")
     .get(auth(false),async (req,res)=>{
         let uid = parseInt(req.params.id);
         if(isNaN(uid)) {
@@ -116,7 +118,7 @@ app.route("/user/:id")
     })
 
 
-app.route("/post/:id")
+app.route("/api/post/:id")
     .get(auth(false),async (req,res)=>{
         let post = await db.getPost(Number(req.params.id));
         if(!post) return sendError(res,404,"Post Not Found");
@@ -140,10 +142,17 @@ app.route("/post/:id")
         if(post.ownerId != req.authId  && !(await db.getUser(req.authId)).isAdmin) return sendError(res,403,"Can't delete other users posts");
         if(! await db.deletePost(post.id)) return sendError(res,500,"Internal Server Error");
         res.json({success:true,data:null});
-    })
+    });
+app.get("/api/post/:id/raw",async (req,res)=>{
+    let post = await db.getPost(Number(req.params.id));
+    if(!post) return sendError(res,404,"Post Not Found");
+    res.setHeader("Content-Type",mimeMap[post.lang].mime);
+    if(req.query.attachment) res.attachment(post.title+"."+((post.title.match(/(\.)[^.]+$/m)?"":typeMap[post.lang].exts[0])));
+    res.send(post.content);
+})
 
 
-app.post("/post",bodyParser.json(),auth(false),async (req,res)=>{
+app.post("/api/post",bodyParser.json(),auth(false),async (req,res)=>{
     let postBody: Post = req.body;
     if(!postBody.title || !postBody.lang || !postBody.content) return sendError(res,400,"Bad Request");
     postBody.ownerId = req.authId??0;
