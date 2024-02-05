@@ -20,9 +20,6 @@ echo "Installing ui"
 git clone https://github.com/SnurfDev/spaste-ui &>> ../install.log
 cd spaste-ui
 npm install &>> ../install.log
-echo -n "Deploy on url (e.g. https://paste.mydomain.com): "
-read durl
-echo "VITE_API_BASE=$durl/api/" > .env
 npm run build &>> ../install.log
 
 echo "Cleaning Up"
