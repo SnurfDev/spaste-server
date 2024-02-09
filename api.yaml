@@ -1,0 +1,242 @@
+openapi: 3.0.0
+info:
+  title: SPaste API
+  description: User Data API for SPaste
+  version: 0.1.9
+servers:
+  - url: https://paste.snurf.dev/api
+    description: User Data API
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: Get an API key in your account settings
+paths:
+  /user/{id}:
+    get:
+      summary: Returns a user by id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 00000000-0000-0000-0000-000000000000
+          description: User ID in UUID Format
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A User Object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                        example: 0
+                      uuid:
+                        type: string
+                        example: 00000000-0000-0000-0000-000000000000
+                      username:
+                        type: string
+                        example: anonymous
+                      joindate:
+                        type: number
+                        example: 0
+                        description: "Join Date as Unix Timestamp"
+                      posts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            title:
+                              type: string
+                              example: "Test Title"
+                            uuid:
+                              type: string
+                              example: 00000000-0000-0000-0000-000000000000
+                            created:
+                              type: number
+                              example: 0
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  reason:
+                    type: string
+                    example: User not found
+
+
+
+  /user/@me:
+    get:
+      security:
+        - ApiKeyAuth: [ ]
+      summary: Returns the user who owns the API key
+      responses:
+        '200':
+          description: A User Object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                        example: 0
+                      uuid:
+                        type: string
+                        example: 00000000-0000-0000-0000-000000000000
+                      username:
+                        type: string
+                        example: anonymous
+                      email:
+                        type: string
+                        example: my@email.com
+                      joindate:
+                        type: number
+                        example: 0
+                        description: "Join Date as Unix Timestamp"
+                      posts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            title:
+                              type: string
+                              example: "Test Title"
+                            uuid:
+                              type: string
+                              example: 00000000-0000-0000-0000-000000000000
+                            created:
+                              type: number
+                              example: 0
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  reason:
+                    type: string
+                    example: Unauthorized
+    patch:
+      security:
+        - ApiKeyAuth: [ ]
+      summary: Edit account of the user who owns the API key
+      requestBody:
+        description: Data to change
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                      example: anonymous
+                    password:
+                      type: string
+                      example: newpassword
+
+      responses:
+        '200':
+          description: Successfully Edited
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: string
+                    example: 00000000-0000-0000-0000-000000000000
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  reason:
+                    type: string
+                    example: Unauthorized
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  reason:
+                    type: string
+                    example: Internal Server Error
+    delete:
+      security:
+        - ApiKeyAuth: [ ]
+      summary: Delete Account of API key owner
+      description: WARNING! this WILL delete your API key
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  reason:
+                    type: string
+                    example: Unauthorized
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  reason:
+                    type: string
+                    example: Internal Server Error

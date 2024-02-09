@@ -1,6 +1,6 @@
 import express, {RequestHandler} from "express"
 import cors from "cors"
-import db, {Post, User} from "./db"
+import db, {ANONID, Post, User} from "./db"
 import Cache from "node-cache"
 import cookieParser from "cookie-parser"
 import bodyParser from "body-parser";
@@ -21,10 +21,13 @@ let verificationCodes = new Cache({stdTTL:5*60});
 declare global {
     namespace Express {
         interface Request {
-            authId:number
+            authId:string
         }
     }
 }
+const UUIDRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const validateUUID = (uuid:string)=>UUIDRegex.test(uuid);
 const sha256 = (data:string|Buffer)=>crypto.createHash("sha256").update(data).digest("hex");
 const sendError = (res:express.Response,code:number,reason:string)=>res.status(code).json({success:false,data:null,reason})
 
@@ -49,7 +52,8 @@ app.post("/api/register",bodyParser.json(),async (req,res)=>{
             verificationCodes.set(sha256(registerBody.username+registerBody.password+registerBody.email),code);
             await sendMail(registerBody.email,"Verification Code",`Your Verification code is ${code}`);
             return res.json({success:true,data:"verify_code"})
-        }catch {
+        }catch (e){
+            console.log(e)
             return sendError(res,500,"Can't send email");
         }
     }
@@ -63,13 +67,13 @@ app.post("/api/register",bodyParser.json(),async (req,res)=>{
 })
 const auth:(required:boolean)=>RequestHandler =(required)=>(req,res,next)=>{
     let authorized = false;
-    let uid = 0;
+    let uid = "";
 
     if(req.headers.authorization) {
         let [authType,token] = req.headers.authorization.split(" ");
         if(authType == "Bearer" && tokens.has(token)) {
             authorized = true;
-            uid = tokens.get<number>(token);
+            uid = tokens.get<string>(token);
             tokens.ttl(token,60*5);
         }
     }
@@ -83,8 +87,8 @@ const auth:(required:boolean)=>RequestHandler =(required)=>(req,res,next)=>{
 
 app.route("/api/user/:id")
     .get(auth(false),async (req,res)=>{
-        let uid = parseInt(req.params.id);
-        if(isNaN(uid)) {
+        let uid = req.params.id;
+        if(!validateUUID(uid)) {
             if(req.params.id == "@me" && req.authId) {
                 uid = req.authId;
             }else{
@@ -94,57 +98,57 @@ app.route("/api/user/:id")
         }
         let user = await db.getUser(uid);
         if(!user) return sendError(res,404,"Not Found");
-        if(user.id != req.authId && user.email) delete user.email;
+        if(user.uuid != req.authId && user.email) delete user.email;
         delete user.passhash;
         res.json({success:true,data:user});
     })
     .patch(auth(true),bodyParser.json(),async(req,res)=>{
         let user = await db.getUser(req.authId);
         if(req.params.id != "@me" && !user.isAdmin) return sendError(res,403,"You can only edit your own profile");
-        let u2p = await db.getUser((req.params.id == "@me")?user.id:Number(req.params.id));
+        let u2p = await db.getUser((req.params.id == "@me")?user.uuid:req.params.id);
         let newData:{username:string,password:string,passhash?:string} = req.body;
         if(newData.password) newData.passhash = sha256(newData.password);
         u2p.username = newData.username ?? u2p.username;
         u2p.passhash = newData.passhash ?? u2p.passhash;
-        if(! await db.editUser(u2p.id,u2p)) return sendError(res,500,"Internal Server Error");
-        res.json({success:true,data:u2p.id});
+        if(! await db.editUser(u2p.uuid,u2p)) return sendError(res,500,"Internal Server Error");
+        res.json({success:true,data:u2p.uuid});
     })
     .delete(auth(true),async(req,res)=>{
         let user = await db.getUser(req.authId);
         if(req.params.id != "@me" && !user.isAdmin) return sendError(res,403,"You can only delete your own account");
-        let u2d = await db.getUser((req.params.id == "@me")?user.id:Number(req.params.id));
-        if(! await db.deleteUser(u2d.id)) return sendError(res,500,"Internal Server Error");
+        let u2d = await db.getUser((req.params.id == "@me")?user.uuid:req.params.id);
+        if(! await db.deleteUser(u2d.uuid)) return sendError(res,500,"Internal Server Error");
         res.json({success:true,data:null});
     })
 
 
 app.route("/api/post/:id")
     .get(auth(false),async (req,res)=>{
-        let post = await db.getPost(Number(req.params.id));
+        let post = await db.getPost(req.params.id);
         if(!post) return sendError(res,404,"Post Not Found");
-        post.ownerName = (await db.getUser(post.ownerId??1,false)).username;
+        post.ownerName = (await db.getUser(post.ownerId??ANONID,false)).username;
         res.json({success:true,data:post});
     })
     .patch(auth(true),bodyParser.json(),async (req,res)=>{
-        let post = await db.getPost(Number(req.params.id));
+        let post = await db.getPost(req.params.id);
         if(!post) return sendError(res,404,"Post Not Found");
         if(post.ownerId != req.authId && !(await db.getUser(req.authId)).isAdmin) return sendError(res,403,"Can't edit other users posts");
         let newData:Post = req.body;
         post.title = newData.title ?? post.title;
         post.lang = newData.lang ?? post.lang;
         post.content = newData.content ?? post.content;
-        if(! await db.editPost(post.id,post)) return sendError(res,500,"Internal Server Error");
-        res.json({success:true,data:post.id});
+        if(! await db.editPost(post.uuid,post)) return sendError(res,500,"Internal Server Error");
+        res.json({success:true,data:post.uuid});
     })
     .delete(auth(true),async(req,res)=>{
-        let post = await db.getPost(Number(req.params.id));
+        let post = await db.getPost(req.params.id);
         if(!post) return sendError(res,404,"Post Not Found");
         if(post.ownerId != req.authId  && !(await db.getUser(req.authId)).isAdmin) return sendError(res,403,"Can't delete other users posts");
-        if(! await db.deletePost(post.id)) return sendError(res,500,"Internal Server Error");
+        if(! await db.deletePost(post.uuid)) return sendError(res,500,"Internal Server Error");
         res.json({success:true,data:null});
     });
 app.get("/api/post/:id/raw",async (req,res)=>{
-    let post = await db.getPost(Number(req.params.id));
+    let post = await db.getPost(req.params.id);
     if(!post) return sendError(res,404,"Post Not Found");
     res.setHeader("Content-Type",mimeMap[post.lang].mime);
     if(req.query.attachment) res.attachment(post.title+"."+((post.title.match(/(\.)[^.]+$/m)?"":typeMap[post.lang].exts[0])));
@@ -155,7 +159,7 @@ app.get("/api/post/:id/raw",async (req,res)=>{
 app.post("/api/post",bodyParser.json(),auth(false),async (req,res)=>{
     let postBody: Post = req.body;
     if(!postBody.title || !postBody.lang || !postBody.content) return sendError(res,400,"Bad Request");
-    postBody.ownerId = req.authId??0;
+    postBody.ownerId = req.authId??ANONID;
     let pid = await db.makePost(postBody);
     if(!pid) return sendError(res,500,"Internal Server Error");
     res.json({success:true,data:pid});
